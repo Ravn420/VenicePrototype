@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>venice studio</title>
+<style>:root { --host-bg: rgb(14, 18, 23); --host-fg: rgb(238, 237, 228); --host-fg-muted: rgb(162, 166, 170); --host-card: rgba(255, 255, 255, 0.04); --host-card-fg: rgb(238, 237, 228); --host-input: rgba(255, 255, 255, 0.04); --host-muted: rgba(255, 255, 255, 0.04); --host-border: rgba(255, 255, 255, 0.06); --host-border-hover: rgba(255, 255, 255, 0.12); --host-primary: rgb(18, 92, 161); --host-secondary: rgba(255, 255, 255, 0.04); --host-secondary-fg: rgb(238, 237, 228); --host-success: #22c55e; --host-error: #ef4444; } * { box-sizing: border-box; margin: 0; padding: 0; } :root, html, body { width: 100%; max-width: 100%; height: auto; overflow-x: hidden; overflow-y: visible; background: transparent; font-family: Inter, system-ui, -apple-system, sans-serif; } #sandbox-content { width: 100%; } @media (max-width: 640px) { :where(#sandbox-content svg, #sandbox-content img) { max-width: 100%; height: auto; } } </style></head>
+<body>
+<div id="sandbox-content"><style>
+:root{
+  --bg:#0d0f0c;--bg2:#11140e;--bg3:#171b13;--bg4:#1d221a;
+  --line:#232a1d;--line2:#303926;--line3:#3d4831;
+  --fg:#e2e9d6;--mid:#a3ae92;--dim:#7c8770;--dim2:#5b6550;
+  --acc:#c8f751;--acc2:#a4d92f;--accd:#8fbc20;
+  --ok:#63e08e;--warn:#f0b53f;--bad:#f2564b;--info:#6fb6ff;
+  --rail:46px;--insp:300px;--rs:7px;
+  --t:140ms cubic-bezier(.2,.7,.3,1);--ts:240ms cubic-bezier(.2,.8,.25,1);
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:13px;-webkit-font-smoothing:antialiased}
+body{min-height:760px;overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+button:disabled{cursor:not-allowed}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+a{color:var(--acc2)}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:9px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--line3)}
+
+.app{height:740px;display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;overflow:hidden;
+  background:radial-gradient(900px 420px at 18% -12%,rgba(200,247,81,.075),transparent 60%),radial-gradient(700px 400px at 100% 0%,rgba(111,182,255,.05),transparent 65%),var(--bg)}
+
+.topbar{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#12150f,#0e110c);min-width:0}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:-.2px;font-size:13.5px;white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 3px rgba(200,247,81,.13)}
+.brand i{font-style:normal;color:var(--dim2);font-weight:500}
+.tier{font:600 9.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:4px 6px;border-radius:5px;border:1px solid var(--line2);color:var(--mid);background:var(--bg3);white-space:nowrap}
+.tier[data-t="bridge"]{color:var(--ok);border-color:#2f5a3d;background:#12241a}
+.spacer{flex:1;min-width:6px}
+.sel{appearance:none;background:var(--bg3) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 9 9'><path d='M1 3l3.5 3.5L8 3' stroke='%237c8770' fill='none' stroke-width='1.4'/></svg>") no-repeat right 7px center;border:1px solid var(--line2);border-radius:var(--rs);padding:5px 22px 5px 8px;font:600 10.5px var(--mono);color:var(--mid);cursor:pointer}
+.sel:hover{border-color:var(--line3);color:var(--fg)}
+
+.btn{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--bg3);color:var(--fg);font-size:11.5px;font-weight:600;white-space:nowrap;transition:background var(--t),border-color var(--t),color var(--t),transform var(--t),opacity var(--t);text-decoration:none}
+.btn:hover:not(:disabled){background:var(--bg4);border-color:var(--line3)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.36}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#11150b}
+.btn.primary:hover:not(:disabled){background:#d4ff66;border-color:#d4ff66}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--mid)}
+.btn.ghost:hover:not(:disabled){background:var(--bg3);color:var(--fg)}
+.btn.icon{width:28px;padding:0;justify-content:center}
+.btn.sm{height:24px;font-size:11px;padding:0 8px}
+.btn.guide{border-color:#3a4a2a;background:#151c10;color:var(--acc2)}
+
+.stepper{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-bottom:1px solid var(--line);background:var(--bg2)}
+.step{position:relative;display:flex;align-items:center;gap:7px;padding:8px 10px;border-right:1px solid var(--line);color:var(--dim);font-size:11.5px;font-weight:600;transition:color var(--t),background var(--t);text-align:left;min-width:0}
+.step:last-child{border-right:none}
+.step .n{font:700 9.5px var(--mono);width:16px;height:16px;flex:0 0 16px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line3);color:var(--dim2);transition:all var(--t)}
+.step .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step[data-s="done"]{color:var(--mid)}
+.step[data-s="done"] .n{background:var(--acc);border-color:var(--acc);color:#11150b}
+.step[data-s="current"]{color:var(--fg);background:linear-gradient(180deg,rgba(200,247,81,.09),transparent)}
+.step[data-s="current"] .n{border-color:var(--acc);color:var(--acc);box-shadow:0 0 0 3px rgba(200,247,81,.12)}
+.step[data-s="current"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--acc)}
+.step[data-s="locked"]{color:var(--dim2);opacity:.72}
+.step:not([data-s="locked"]):hover{background:var(--bg3);color:var(--fg)}
+
+.main{display:grid;min-height:0;min-width:0;grid-template-columns:var(--rail) minmax(0,1fr) var(--insp);grid-template-rows:minmax(0,1fr);grid-template-areas:"rail work insp"}
+.rail{grid-area:rail;display:flex;flex-direction:column;gap:2px;padding:7px 5px;border-right:1px solid var(--line);background:var(--bg2);z-index:6}
+.rbtn{width:36px;height:34px;display:grid;place-items:center;border-radius:8px;color:var(--dim);transition:all var(--t);position:relative}
+.rbtn:hover{background:var(--bg3);color:var(--fg)}
+.rbtn[aria-pressed="true"]{background:rgba(200,247,81,.11);color:var(--acc)}
+.rbtn[aria-pressed="true"]::before{content:"";position:absolute;left:-5px;top:8px;bottom:8px;width:2px;border-radius:2px;background:var(--acc)}
+.rail .sep{height:1px;background:var(--line);margin:5px 4px}
+.rail .grow{flex:1}
+
+.work{grid-area:work;min-width:0;min-height:0;position:relative;display:grid;grid-template-rows:auto auto minmax(0,1fr);overflow:hidden}
+.cmdbar{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--bg2);min-width:0}
+.cmdbar .lead{width:22px;height:22px;flex:0 0 22px;border-radius:6px;display:grid;place-items:center;background:rgba(200,247,81,.1);color:var(--acc);font:700 10px var(--mono)}
+.cmdbar .txt{min-width:0;flex:1}
+.cmdbar .t1{font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmdbar .t2{font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.dirchip{display:inline-flex;align-items:center;gap:6px;max-width:260px;border:1px solid var(--line2);background:var(--bg3);border-radius:20px;padding:3px 9px 3px 7px;font:600 10.5px var(--mono);color:var(--mid);cursor:pointer}
+.dirchip b{color:var(--fg);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dirchip.real{border-color:#2f5a3d;background:#12241a;color:var(--ok)}
+.dirchip.virtual{border-color:#3a4a2a;background:#151c10;color:var(--acc2)}
+
+.prog{height:2px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc2),var(--acc));transition:width var(--ts)}
+
+.term{display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0;background:var(--bg)}
+.termTabs{display:flex;align-items:center;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);background:var(--bg2)}
+.ttab{padding:5px 10px;font-size:11px;font-weight:600;color:var(--dim);border-radius:6px 6px 0 0;border:1px solid transparent;border-bottom:none;transition:all var(--t)}
+.ttab:hover{color:var(--fg);background:var(--bg3)}
+.ttab[aria-selected="true"]{color:var(--fg);background:var(--bg);border-color:var(--line)}
+.ttab .c{font:600 9px var(--mono);color:var(--dim2);margin-left:5px}
+.termBody{overflow:auto;padding:10px 12px 26px;font:11.5px/1.65 var(--mono);min-height:0}
+.line{display:flex;gap:8px;white-space:pre-wrap;word-break:break-word;padding:1px 0}
+.line .ts{color:var(--dim2);flex:0 0 auto;font-size:10px;padding-top:2px}
+.line .msg{min-width:0}
+.line[data-k="ok"] .msg{color:var(--ok)}
+.line[data-k="bad"] .msg{color:var(--bad)}
+.line[data-k="warn"] .msg{color:var(--warn)}
+.line[data-k="dim"] .msg{color:var(--dim)}
+.line[data-k="step"]{margin-top:9px}
+.line[data-k="step"] .msg{color:var(--fg);font-weight:700}
+
+.drawer{position:absolute;inset:0;z-index:20;display:grid;grid-template-rows:auto minmax(0,1fr);background:var(--bg);border-right:1px solid var(--line2);transform:translateX(-100%);visibility:hidden;transition:transform var(--ts),visibility var(--ts);box-shadow:24px 0 40px -24px rgba(0,0,0,.7)}
+.drawer.open{transform:translateX(0);visibility:visible}
+.drawerHead{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--bg2)}
+.drawerHead h2{margin:0;font-size:12.5px;font-weight:700;flex:1}
+.drawerBody{overflow:auto;padding:12px;min-height:0}
+
+.insp{grid-area:insp;min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);border-left:1px solid var(--line);background:var(--bg2);overflow:hidden}
+.tabs{display:flex;gap:1px;padding:6px 6px 0;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:5px 9px;font-size:10.5px;font-weight:650;color:var(--dim);border-radius:6px 6px 0 0;white-space:nowrap;transition:all var(--t);border:1px solid transparent;border-bottom:none}
+.tab:hover{color:var(--fg);background:var(--bg3)}
+.tab[aria-selected="true"]{color:var(--fg);background:var(--bg);border-color:var(--line)}
+.panes{overflow:auto;min-height:0;background:var(--bg)}
+.pane{display:none;padding:11px}
+.pane.on{display:block}
+
+.h{font:700 9.5px var(--mono);letter-spacing:.11em;text-transform:uppercase;color:var(--dim2);margin:0 0 8px}
+.h:not(:first-child){margin-top:16px}
+.muted{color:var(--dim);font-size:11px;line-height:1.55}
+.empty{text-align:center;padding:26px 12px;color:var(--dim)}
+.empty .ico{width:34px;height:34px;margin:0 auto 9px;border-radius:9px;display:grid;place-items:center;border:1px dashed var(--line3);color:var(--dim2)}
+.empty p{margin:0 0 10px;font-size:11px;line-height:1.5}
+
+.file{display:flex;align-items:center;gap:7px;padding:4px 5px;border-radius:5px;font:10.5px var(--mono)}
+.file:hover{background:var(--bg3)}
+.file .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mid)}
+.file .sz{color:var(--dim2);font-size:9.5px}
+.folder{margin-top:8px;font:700 9.5px var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--dim2)}
+
+.check{display:flex;gap:8px;padding:7px 8px;border-radius:7px;border:1px solid var(--line);margin-bottom:6px;background:var(--bg2);align-items:flex-start}
+.check .st{width:15px;height:15px;flex:0 0 15px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:700;margin-top:1px}
+.check[data-r="pass"]{border-color:#2c4c37;background:#101c14}
+.check[data-r="pass"] .st{background:var(--ok);color:#08170d}
+.check[data-r="fail"]{border-color:#5c2b26;background:#1d1211}
+.check[data-r="fail"] .st{background:var(--bad);color:#fff}
+.check[data-r="wait"] .st{background:var(--bg4);color:var(--dim2)}
+.check[data-r="run"] .st{background:var(--acc);color:#11150b}
+.check .tt{font-size:11px;font-weight:600;line-height:1.35}
+.check .dd{font-size:10px;color:var(--dim);margin-top:2px;line-height:1.45;word-break:break-word}
+
+.field{display:flex;gap:5px}
+.input{flex:1;min-width:0;background:var(--bg3);border:1px solid var(--line2);border-radius:var(--rs);padding:6px 8px;font:11px var(--mono);color:var(--fg)}
+.input:focus{border-color:var(--acc);outline:none}
+.toggles{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.tog{font:600 9.5px var(--mono);padding:3px 7px;border-radius:5px;border:1px solid var(--line2);color:var(--dim);transition:all var(--t)}
+.tog[aria-pressed="true"]{background:rgba(200,247,81,.1);border-color:var(--accd);color:var(--acc)}
+.prev{width:100%;height:210px;border:1px solid var(--line2);border-radius:8px;background:#fff;margin-top:9px}
+.cspbox{margin-top:8px;font:9.5px/1.55 var(--mono);color:var(--mid);background:#0a0c08;border:1px solid var(--line);border-radius:6px;padding:8px;word-break:break-all;max-height:190px;overflow:auto;white-space:pre-wrap}
+
+.run{display:flex;align-items:center;gap:7px;padding:6px 7px;border:1px solid var(--line);border-radius:7px;margin-bottom:5px;background:var(--bg2)}
+.run .nm{flex:1;font-size:10.5px;color:var(--mid)}
+.pill{font:700 8px var(--mono);padding:2px 5px;border-radius:4px;text-transform:uppercase;background:#12301f;color:var(--ok)}
+
+.dtOut{font:10.5px/1.5 var(--mono);color:var(--mid);background:var(--bg3);border:1px solid var(--line);border-radius:7px;padding:8px;max-height:190px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.req{display:flex;gap:6px;font:9.5px var(--mono);padding:2px 0;color:var(--dim)}
+.req .code{color:var(--ok)}
+.req .code.bad{color:var(--bad)}
+
+.statusbar{display:flex;align-items:center;gap:10px;padding:5px 12px;border-top:1px solid var(--line);background:var(--bg2);font:10.5px var(--mono);color:var(--dim);min-width:0}
+.statusbar .st{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.statusbar .st b{color:var(--mid);font-weight:600}
+.gateBadge{font:700 9px var(--mono);padding:2px 6px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line2);color:var(--dim2)}
+.gateBadge[data-g="pass"]{color:var(--ok);border-color:#2c4c37;background:#101c14}
+.gateBadge[data-g="fail"]{color:var(--bad);border-color:#5c2b26;background:#1d1211}
+
+.toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:86;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(420px,90vw)}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:8px;width:100%;background:#171b13;border:1px solid var(--line2);border-left:3px solid var(--acc);border-radius:8px;padding:8px 10px;font-size:11.5px;transition:opacity var(--t)}
+.toast[data-k="bad"]{border-left-color:var(--bad)}
+.toast[data-k="warn"]{border-left-color:var(--warn)}
+.toast .msg{flex:1;min-width:0}
+.toast .x{color:var(--dim);width:18px;height:18px;display:grid;place-items:center;border-radius:4px}
+.toast .x:hover{background:var(--bg4);color:var(--fg)}
+.toast.out{opacity:0}
+
+.scrim{position:fixed;inset:0;background:rgba(6,8,5,.66);backdrop-filter:blur(3px);z-index:80;display:none}
+.scrim.on{display:block}
+.palette{position:fixed;top:74px;left:50%;transform:translateX(-50%);width:min(460px,92vw);z-index:84;background:#12150f;border:1px solid var(--line2);border-radius:12px;overflow:hidden;display:none}
+.palette.on{display:block}
+.palette input{width:100%;border:none;border-bottom:1px solid var(--line);background:transparent;padding:12px 14px;font-size:13px;color:var(--fg)}
+.palette input:focus{outline:none}
+.palList{max-height:290px;overflow:auto;padding:5px}
+.palItem{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;font-size:12px;cursor:pointer}
+.palItem .nm{flex:1}
+.palItem .k{font:600 9px var(--mono);color:var(--dim2);border:1px solid var(--line2);border-radius:3px;padding:1px 4px}
+.palItem[aria-selected="true"]{background:rgba(200,247,81,.1);color:var(--acc)}
+.palFoot{padding:6px 12px;border-top:1px solid var(--line);font:9.5px var(--mono);color:var(--dim2);display:flex;gap:12px}
+
+.stage{border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:#0a0c08;display:grid;grid-template-rows:auto minmax(0,1fr);height:330px}
+.stageBar{display:flex;align-items:center;gap:6px;padding:6px 9px;background:#141813;border-bottom:1px solid var(--line)}
+.stageBar .tl{display:flex;gap:4px}
+.stageBar .tl i{width:8px;height:8px;border-radius:50%;background:var(--line3);display:block}
+.stageBar .url{flex:1;font:10px var(--mono);color:var(--dim);background:var(--bg3);border-radius:5px;padding:2px 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stageBody{overflow:auto;padding:14px;background:#0e110c}
+
+.banner{display:none;gap:9px;align-items:center;padding:8px 12px;font-size:11.5px;border-bottom:1px solid #3a3a1f;background:#1b1d10;color:#e8e6b0}
+.banner.on{display:flex}
+.banner .bmsg{flex:1;min-width:0;line-height:1.45}
+.banner b{color:#fff}
+
+.kbd{font:600 9.5px var(--mono);border:1px solid var(--line2);border-bottom-width:2px;border-radius:4px;padding:1px 4px;color:var(--mid);background:var(--bg3)}
+.helpgrid{display:grid;grid-template-columns:1fr auto;gap:6px 10px;font-size:11.5px;align-items:center}
+.helpgrid span:nth-child(odd){color:var(--mid)}
+
+.wiz{position:fixed;top:0;right:0;bottom:0;width:min(392px,96vw);z-index:78;display:flex;flex-direction:column;background:#10130d;border-left:1px solid var(--line2);box-shadow:-30px 0 60px -30px rgba(0,0,0,.9);transform:translateX(101%);transition:transform var(--ts)}
+.wiz.on{transform:translateX(0)}
+.wizHead{display:flex;align-items:center;gap:9px;padding:12px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#151a11,#11140e)}
+.wizHead h2{margin:0;font-size:13px;font-weight:700;flex:1}
+.wizHead .ct{font:600 9.5px var(--mono);color:var(--dim2)}
+.wizBars{display:flex;gap:3px;padding:0 14px}
+.wizBars i{height:3px;flex:1;border-radius:2px;background:var(--line2)}
+.wizBars i.done{background:var(--acc)}
+.wizBars i.cur{background:var(--acc);opacity:.5}
+.wizBody{flex:1;overflow:auto;padding:16px 14px;min-height:0}
+.wizNum{font:700 10px var(--mono);color:var(--acc);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.wizBody h3{margin:0 0 8px;font-size:15px;line-height:1.3;letter-spacing:-.2px}
+.wizWhy{font-size:11.5px;color:var(--mid);line-height:1.6;margin:0 0 12px}
+.wizList{margin:0 0 12px;padding:0;list-style:none}
+.wizList li{display:flex;gap:7px;font-size:11px;color:var(--dim);line-height:1.5;padding:3px 0}
+.wizList li::before{content:"—";color:var(--line3);flex:0 0 auto}
+.wizNote{border:1px solid var(--line);border-left:2px solid var(--acc);background:#141a10;border-radius:6px;padding:8px 9px;font-size:11px;color:var(--mid);line-height:1.5;margin-bottom:12px}
+.wizLog{margin-top:12px;font:10px/1.6 var(--mono);color:var(--dim);background:#0a0c08;border:1px solid var(--line);border-radius:6px;padding:8px;max-height:150px;overflow:auto;white-space:pre-wrap}
+.wizLog .ok{color:var(--ok)}
+.wizLog .bad{color:var(--bad)}
+.wizLog .try{color:var(--warn)}
+.wizFix{border:1px solid #5a4a22;background:#1d1810;border-radius:8px;padding:10px;margin-top:12px}
+.wizFix .ttl{font:700 10px var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--warn);margin-bottom:7px}
+.wizFix .sub{font-size:11px;color:var(--mid);line-height:1.5;margin-bottom:9px}
+.wizFix .row{display:flex;flex-direction:column;gap:5px}
+.wizFix .btn{width:100%;justify-content:flex-start;height:29px}
+.wizFoot{display:flex;align-items:center;gap:6px;padding:11px 14px;border-top:1px solid var(--line);background:#151a11}
+.wizFoot .grow{flex:1}
+.wizDone{text-align:center;padding:22px 6px}
+.wizDone .big{width:44px;height:44px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:rgba(200,247,81,.12);color:var(--acc);font-size:20px;border:1px solid #3a4a2a}
+
+.picker{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:82;width:min(560px,94vw);max-height:86vh;display:none;flex-direction:column;background:#11140e;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.picker.on{display:flex}
+.pickHead{display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid var(--line);background:#151a11}
+.pickHead h2{margin:0;font-size:13px;font-weight:700;flex:1}
+.pickHead .sub{font:9.5px var(--mono);color:var(--dim2)}
+.pickWarn{display:none;padding:10px 13px;background:#221b0f;border-bottom:1px solid #5a4a22;color:#f5dda6;font-size:11px;line-height:1.5}
+.pickWarn.on{display:block}
+.pickWarn .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.crumbs{display:flex;align-items:center;gap:1px;padding:8px 12px;border-bottom:1px solid var(--line);overflow-x:auto;font:10.5px var(--mono)}
+.crumb{padding:3px 6px;border-radius:5px;color:var(--mid);white-space:nowrap}
+.crumb:hover{background:var(--bg3);color:var(--fg)}
+.crumb.last{color:var(--acc);font-weight:600}
+.crumbs .sep{color:var(--dim2);padding:0 1px}
+.pickList{flex:1;overflow:auto;min-height:150px;max-height:300px;padding:6px}
+.prow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px}
+.prow:hover{background:var(--bg3)}
+.prow.file{cursor:default;opacity:.55}
+.prow.file .nm{font:11px var(--mono);color:var(--mid)}
+.prow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg);font-weight:500}
+.prow .ico{width:15px;color:var(--dim);display:grid;place-items:center}
+.prow.dir .ico{color:var(--acc2)}
+.prow .go{font:9px var(--mono);color:var(--dim2)}
+.pickNew{display:flex;gap:6px;padding:9px 12px;border-top:1px solid var(--line);background:var(--bg2)}
+.pickFoot{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:#151a11}
+.pickFoot .note{flex:1;font-size:10.5px;color:var(--dim);line-height:1.4}
+.pickTarget{font:10.5px var(--mono);color:var(--acc);background:rgba(200,247,81,.08);border:1px solid #3a4a2a;border-radius:5px;padding:4px 7px;margin:9px 12px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+@media (max-width:820px){
+  .main{grid-template-columns:var(--rail) minmax(0,1fr);grid-template-rows:minmax(0,1fr) 200px;grid-template-areas:"rail work" "rail insp"}
+  .insp{border-left:none;border-top:1px solid var(--line)}
+  .stepper .lbl{display:none}
+  .step{justify-content:center}
+}
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span>venice<i>·</i>studio</div>
+    <span class="tier" id="tierBadge" data-t="shim">shim</span>
+    <div class="spacer"></div>
+    <select class="sel" id="platform" aria-label="Target platform">
+      <option value="linux">linux · x64</option>
+      <option value="win32">win32 · x64</option>
+      <option value="darwin">darwin · arm64</option>
+    </select>
+    <button class="btn guide" data-act="wiz" id="bWiz">Guide me</button>
+    <button class="btn" data-act="dir" id="bDir" disabled="">Choose folder</button>
+    <button class="btn" data-act="plan" id="bPlan" disabled="">Plan</button>
+    <button class="btn" data-act="gate" id="bGate" disabled="">Gate</button>
+    <button class="btn" data-act="write" id="bWrite" disabled="">Write</button>
+    <button class="btn" data-act="install" id="bInstall" disabled="">Install</button>
+    <button class="btn" data-act="build" id="bBuild" disabled="">Build</button>
+    <button class="btn primary" data-act="run" id="bRun" disabled="">Run</button>
+    <button class="btn icon ghost" data-act="palette" id="bPal" title="Commands (⌘K)" aria-label="Command palette">⌘K</button>
+  </header>
+
+  <div class="banner" id="banner"><span class="bmsg"><b>Files go to Ravn420/VenicePrototype.</b> Download them, then upload to the repo — no git, no folder permission.</span><button class="btn sm primary" data-act="dlZip">Download files</button><a class="btn sm" href="https://github.com/Ravn420/VenicePrototype/upload/main" target="_blank" rel="noopener">Upload page</a></div>
+
+  <nav class="stepper" id="stepper" aria-label="Workflow">
+    <button class="step" data-step="plan" data-s="done" title="" disabled=""><span class="n">1</span><span class="lbl">Plan</span></button>
+    <button class="step" data-step="gate" data-s="current" title="" disabled=""><span class="n">2</span><span class="lbl">Gate</span></button>
+    <button class="step" data-step="write" data-s="locked" disabled="" title="gate must pass"><span class="n">3</span><span class="lbl">Write</span></button>
+    <button class="step" data-step="install" data-s="locked" disabled="" title="write first"><span class="n">4</span><span class="lbl">Install</span></button>
+    <button class="step" data-step="build" data-s="locked" disabled="" title="install first"><span class="n">5</span><span class="lbl">Build</span></button>
+    <button class="step" data-step="run" data-s="locked" disabled="" title="build first"><span class="n">6</span><span class="lbl">Run</span></button>
+  </nav>
+
+  <main class="main">
+    <nav class="rail" id="rail">
+      <button class="rbtn" data-act="wiz" title="Guided setup" aria-label="Guided setup">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1.5l1.5 3.9 3.9 1.5-3.9 1.5L8 12.3 6.5 8.4 2.6 6.9l3.9-1.5z"></path></svg>
+      </button>
+      <button class="rbtn" data-act="dir" title="Choose target folder" aria-label="Choose target folder">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 4.5A1 1 0 012.5 3.5h3l1.5 2h6a1 1 0 011 1v6a1 1 0 01-1 1h-11a1 1 0 01-1-1z"></path></svg>
+      </button>
+      <div class="sep"></div>
+      <button class="rbtn" data-tab="files" aria-pressed="false" title="Files" aria-label="Files pane">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 1.5h5l3 3v10h-8z"></path><path d="M9 1.5v3h3"></path></svg>
+      </button>
+      <button class="rbtn" data-tab="surface" aria-pressed="false" title="Surface" aria-label="Surface pane">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"></rect><path d="M1.5 5.5h13"></path></svg>
+      </button>
+      <button class="rbtn" data-tab="runs" aria-pressed="false" title="Runs" aria-label="Runs pane">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 2.5l9 5.5-9 5.5z"></path></svg>
+      </button>
+      <button class="rbtn" data-tab="devtools" aria-pressed="true" title="DevTools" aria-label="DevTools pane">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5.5 4L2 8l3.5 4M10.5 4L14 8l-3.5 4"></path></svg>
+      </button>
+      <div class="grow"></div>
+      <button class="rbtn" data-act="help" title="Shortcuts (?)" aria-label="Keyboard shortcuts">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.2"></circle><path d="M6.2 6.2a1.9 1.9 0 113.3 1.3c-.6.5-1.5.8-1.5 1.7"></path><circle cx="8" cy="11.4" r=".7" fill="currentColor"></circle></svg>
+      </button>
+      <button class="rbtn" data-act="deploy" title="Push to Ravn420/VenicePrototype" aria-label="Push to repo">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="4.5" cy="3.5" r="1.8"></circle><circle cx="4.5" cy="12.5" r="1.8"></circle><circle cx="11.5" cy="8" r="1.8"></circle><path d="M4.5 5.3v5.4M6.3 3.9l3.4 3.1M6.3 12.1l3.4-3.1"></path></svg>
+      </button>
+      <button class="rbtn" data-act="export" title="Export files" aria-label="Export">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1.5v8M4.5 6L8 9.5 11.5 6"></path><path d="M2.5 11v2.5h11V11"></path></svg>
+      </button>
+    </nav>
+
+    <section class="work" id="work">
+      <div class="cmdbar">
+        <div class="lead" id="cmdNum">2</div>
+        <div class="txt">
+          <div class="t1" id="cmdTitle">Pass the gate</div>
+          <div class="t2" id="cmdHint">Write stays locked until all checks are green.</div>
+        </div>
+        <div id="dirChip"><span class="dirchip virtual" data-act="dir" role="button" tabindex="0" title="Change folder">▸ <b>/home/venice/venice-studio/A</b></span></div>
+      </div>
+      <div class="prog"><i id="progBar" style="width: 22%;"></i></div>
+
+      <div class="term">
+        <div class="termTabs" role="tablist">
+          <button class="ttab" aria-selected="true" data-view="out">output</button>
+          <button class="ttab" aria-selected="false" data-view="err">errors<span class="c" id="errCount">4</span></button>
+        </div>
+        <div class="termBody" id="log" role="log" aria-live="polite"><div class="line" data-k="step"><span class="ts">14:15:03</span><span class="msg">▸ Planning venice-studio</span></div><div class="line" data-k="ok"><span class="ts">14:15:03</span><span class="msg">0 packages resolved, 14 files staged</span></div><div class="line" data-k="warn"><span class="ts">14:15:03</span><span class="msg">1 unresolved</span></div><div class="line" data-k="step"><span class="ts">14:15:16</span><span class="msg">▸ Running gate</span></div><div class="line" data-k="ok"><span class="ts">14:15:16</span><span class="msg">PASS Target folder is writable — /home/venice/venice-studio/A</span></div><div class="line" data-k="ok"><span class="ts">14:15:16</span><span class="msg">PASS No dependency cycles — acyclic</span></div><div class="line" data-k="ok"><span class="ts">14:15:16</span><span class="msg">PASS Platform binaries match — win32</span></div><div class="line" data-k="ok"><span class="ts">14:15:17</span><span class="msg">PASS Permission script present — present</span></div><div class="line" data-k="ok"><span class="ts">14:15:17</span><span class="msg">PASS Package count under 900 — 0 packages</span></div><div class="line" data-k="step"><span class="ts">14:15:26</span><span class="msg">▸ Running gate</span></div><div class="line" data-k="ok"><span class="ts">14:15:26</span><span class="msg">PASS Target folder is writable — /home/venice/venice-studio/A</span></div><div class="line" data-k="ok"><span class="ts">14:15:26</span><span class="msg">PASS No dependency cycles — acyclic</span></div><div class="line" data-k="ok"><span class="ts">14:15:26</span><span class="msg">PASS Platform binaries match — win32</span></div><div class="line" data-k="ok"><span class="ts">14:15:27</span><span class="msg">PASS Permission script present — present</span></div><div class="line" data-k="ok"><span class="ts">14:15:27</span><span class="msg">PASS Package count under 900 — 0 packages</span></div><div class="line" data-k="ok"><span class="ts">14:15:52</span><span class="msg">bundle: 8 files for Ravn420/VenicePrototype</span></div><div class="line" data-k="dim"><span class="ts">14:15:52</span><span class="msg">unzip → git init → commit → push</span></div><div class="line" data-k="ok"><span class="ts">14:16:35</span><span class="msg">bundle: 8 files for Ravn420/VenicePrototype</span></div><div class="line" data-k="dim"><span class="ts">14:16:35</span><span class="msg">unzip → git init → commit → push</span></div></div>
+      </div>
+
+      <div class="drawer" id="drawer" role="dialog" aria-modal="false" aria-labelledby="drawerTitle">
+        <div class="drawerHead">
+          <h2 id="drawerTitle">Export</h2>
+          <span id="drawerMeta" class="muted" style="font:10px var(--mono)"></span>
+          <button class="btn icon ghost" data-act="closeDrawer" aria-label="Close panel">✕</button>
+        </div>
+        <div class="drawerBody" id="drawerBody"><p class="muted">Writes the tool and a loopback server into the target folder.</p><div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary" data-act="exportGo">Export</button><button class="btn" data-act="dlZip">Files (zip)</button></div></div>
+      </div>
+    </section>
+
+    <aside class="insp">
+      <div class="tabs" role="tablist" id="tabs">
+        <button class="tab" data-tab="files" aria-selected="false">files</button>
+        <button class="tab" data-tab="surface" aria-selected="false">surface</button>
+        <button class="tab" data-tab="runs" aria-selected="false">runs</button>
+        <button class="tab" data-tab="devtools" aria-selected="true">devtools</button>
+      </div>
+      <div class="panes">
+        <div class="pane" id="pane-files" role="tabpanel"><div class="empty"><div class="ico">▤</div><p>Files appear once a plan exists.</p></div></div>
+        <div class="pane" id="pane-surface" role="tabpanel"><p class="h">fetch a surface</p><div class="field"><input class="input" id="surfUrl" placeholder="https://example.com" value="https://example.com"><button class="btn" data-act="surfGo">Get</button></div><div class="toggles"><button class="tog" data-surf="scripts" aria-pressed="false">scripts</button><button class="tog" data-surf="images" aria-pressed="true">images</button></div><div id="surfOut"></div></div>
+        <div class="pane" id="pane-runs" role="tabpanel"><div class="empty"><div class="ico">▶</div><p>No runs recorded yet.</p></div></div>
+        <div class="pane" id="pane-devtools" role="tabpanel"><p class="h">mirror</p><div class="toggles"><button class="tog" data-dt="console" aria-pressed="false">console</button> <button class="tog" data-dt="network" aria-pressed="true">network</button> <button class="tog" data-dt="elements" aria-pressed="false">elements</button> <button class="tog" data-dt="sources" aria-pressed="false">sources</button></div><div class="dtOut" style="margin-top:8px"><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/react-dom</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/typescript</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/@vitejs%2fplugin-react</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/electron-builder</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/react</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/electron</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/electron-vite</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/vite</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/react-dom</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/typescript</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/@vitejs%2fplugin-react</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/electron-builder</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div><div class="req"><span class="code bad">ERR</span><span>https://registry.npmjs.org/react</span></div><div class="req"><span class="code bad">ERR</span><span>https://corsproxy.io/?url=https%3A%2F%2Fregistry.npmjs.org%2</span></div><div class="req"><span class="code bad">ERR</span><span>https://api.allorigins.win/raw?url=https%3A%2F%2Fregistry.np</span></div></div></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="statusbar">
+    <span class="gateBadge" id="gateBadge" data-g="fail">gate fail</span>
+    <span class="st" id="status" aria-live="polite"><b>Gate.</b> Run it to unlock writing.</span>
+    <span id="pkgCount" class="muted">0 pkgs</span>
+  </footer>
+</div>
+
+<aside class="wiz" id="wiz" role="dialog" aria-modal="false" aria-labelledby="wizTitle">
+  <div class="wizHead">
+    <h2 id="wizTitle">Setup</h2>
+    <span class="ct" id="wizCt">2 / 8</span>
+    <button class="btn icon ghost" data-act="wizClose" aria-label="Close wizard">✕</button>
+  </div>
+  <div class="wizBars" id="wizBars"><i class="done"></i><i class="cur"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div>
+  <div class="wizBody" id="wizBody"><div class="wizNum">Step 2 of 8</div><h3>Resolve the dependency tree</h3><p class="wizWhy">Reads the npm registry and works out exact versions for your platform.</p><ul class="wizList"><li>Fetches packuments over the network</li><li>Filters os/cpu-specific packages</li><li>Caps at 900 packages</li></ul><div id="wizFix"><div class="wizFix"><div class="ttl">Blocked — pick a repair</div><div class="sub">Automatic repair did not clear it. Remaining moves, safest first.</div><div class="row"><button class="btn" data-act="wizFix" data-f="0">Clear cache and retry the registry</button><button class="btn" data-act="wizFix" data-f="1">Drop unresolved packages, replan</button><button class="btn" data-act="wizFix" data-f="2">Use the slim manifest</button><button class="btn" data-act="wizFix" data-f="3">Skip planning and stage files only</button><button class="btn ghost" data-act="wizSkip">Skip this step</button></div></div></div><div class="wizLog" id="wizLog"><span class="try">→ Choose folder</span>
+<span class="try">waiting for your folder choice…</span>
+<span class="try">→ Plan</span>
+<span class="bad">step did not clear — repairing</span>
+<span class="try">→ Clear cache and retry the registry</span>
+<span class="try">→ Drop unresolved packages, replan</span>
+<span class="bad">repair exhausted</span></div></div>
+  <div class="wizFoot">
+    <button class="btn ghost sm" data-act="wizBack" id="wizBack">Back</button>
+    <button class="btn ghost sm" data-act="wizAuto" id="wizAuto">Auto: on</button>
+    <span class="grow"></span>
+    <button class="btn primary" data-act="wizGo" id="wizGo">Retry</button>
+  </div>
+</aside>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="picker" id="picker" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+  <div class="pickHead">
+    <h2 id="pickTitle">Choose a build folder</h2>
+    <span class="sub" id="pickMode">system dialog ready</span>
+    <button class="btn icon ghost" data-act="pickCancel" aria-label="Cancel">✕</button>
+  </div>
+  <div class="pickWarn" id="pickWarn"><b>Your browser blocked the system dialog..</b> Folder access is refused across origins. Push this to the repo, open the Pages URL, and the dialog works.<div class="acts"><button class="btn sm primary" data-act="dlZip">Download files</button><button class="btn sm" data-act="deploy">Push to repo</button></div></div>
+  <div class="crumbs" id="crumbs"><button class="crumb" data-crumb="/">root</button><span class="sep">/</span><button class="crumb" data-crumb="/home">home</button><span class="sep">/</span><button class="crumb" data-crumb="/home/venice">venice</button><span class="sep">/</span><button class="crumb" data-crumb="/home/venice/venice-studio">venice-studio</button><span class="sep">/</span><button class="crumb last" data-crumb="/home/venice/venice-studio/A">A</button></div>
+  <div class="pickTarget" id="pickTarget">/home/venice/venice-studio/A</div>
+  <div class="pickList" id="pickList" role="listbox" aria-label="Folders"><div class="prow" data-go="/home/venice/venice-studio"><span class="ico">↰</span><span class="nm">..</span></div></div>
+  <div class="pickNew">
+    <input class="input" id="pickNewName" placeholder="new folder name" aria-label="New folder name">
+    <button class="btn" data-act="pickNew">Create</button>
+  </div>
+  <div class="pickFoot">
+    <span class="note" id="pickNote">Or use the system dialog to write straight to your disk.</span>
+    <button class="btn" data-act="pickNative" id="bNative">System folder…</button>
+    <button class="btn primary" data-act="pickUse">Use this folder</button>
+  </div>
+</div>
+
+<div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+  <input id="paletteInput" placeholder="Type a command…" aria-label="Search commands" autocomplete="off">
+  <div class="palList" id="palList" role="listbox"></div>
+  <div class="palFoot"><span>↑↓ move</span><span>↵ run</span><span>esc close</span></div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+</div><style>:root, html, body { height: auto !important; max-height: 5000px !important; overflow-x: hidden !important; overflow-y: auto !important; background: transparent !important; } html { -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; } </style>
+<script>Object.defineProperty(document, "cookie", {get: function() { return ""; },set: function() {},configurable: false});</script>
+</body></html>
