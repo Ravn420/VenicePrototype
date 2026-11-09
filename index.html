@@ -70,7 +70,10 @@ function req(m,p,b){var h={'Accept':'application/vnd.github+json','X-GitHub-Api-
 return fetch(API+p,{method:m,headers:h,body:b?JSON.stringify(b):undefined}).then(function(r){return r.text().then(function(t){var j=null;try{j=t?JSON.parse(t):null}catch(e){}
 log(r.ok?'ok':(r.status<500?'err':'warn'),m+' '+p+' -> '+r.status+(t?'  '+t.slice(0,140).replace(/\s+/g,' '):''));return{status:r.status,ok:r.ok,json:j}})})
 .catch(function(e){log('warn',m+' '+p+' -> NO RESPONSE ('+(e&&e.message||'net')+')');throw new Error('noresponse')})}
-function pool(a,n,f){var i=0;function w(){if(i>=a.length)return Promise.resolve();var k=i++;return Promise.resolve(f(a[k],k)).then(w)}var ws=[];for(var j=0;j<Math.min(n,a.length);j++)ws.push(w());return Promise.all(ws)}
+function pool(a,n,f){var i=0,out=new Array(a.length);
+function w(){if(i>=a.length)return Promise.resolve();var k=i++;return Promise.resolve(f(a[k],k)).then(function(v){out[k]=v;return w()})}
+var ws=[];for(var j=0;j<Math.min(n,a.length);j++)ws.push(w());
+return Promise.all(ws).then(function(){return out.filter(Boolean)})}
 function makeTree(en,base){var tr={tree:en};if(base)tr.base_tree=base;return req('POST','/repos/'+R+'/git/trees',tr)}
 function diag(){if(!tok()){log('err','paste a token');return Promise.resolve(false)}
 return req('GET','/user').then(function(u){if(u.status===401){log('err','401 — token invalid or expired');return false}
@@ -86,14 +89,15 @@ return req('GET','/repos/'+R).then(function(rp){if(!rp.ok)throw new Error('repo 
 return req('GET','/repos/'+R+'/git/commits/'+par).then(function(cm){if(cm.ok&&cm.json&&cm.json.tree)base=cm.json.tree.sha})})
 .then(function(){return pool(list,5,function(f){return req('POST','/repos/'+R+'/git/blobs',{content:b64(new TextEncoder().encode(f.body)),encoding:'base64'})
 .then(function(b){if(!b.ok)throw new Error('blob '+f.path+' '+b.status);return{path:f.path,mode:'100644',type:'blob',sha:b.json.sha}})})})
-.then(function(en){return makeTree(en,base).then(function(t){
+.then(function(en){if(!en.length)throw new Error('no blob shas returned');log('ok',en.length+' blobs');
+return makeTree(en,base).then(function(t){
 if(t.status===422&&base){log('warn','tree rejected — retrying without base_tree, re-adding root files');
 return req('GET','/repos/'+R+'/contents/?ref=main').then(function(c){
 var ex=(c.ok&&Array.isArray(c.json)?c.json:[]).filter(function(x){return x.type==='file'&&!en.some(function(e){return e.path===x.path})})
 .map(function(x){return{path:x.path,mode:'100644',type:'blob',sha:x.sha}});
 return makeTree(en.concat(ex),null)})}
 return t})})
-.then(function(t){if(!t.ok)throw new Error('tree '+t.status+' '+(t.json&&t.json.message||''));
+.then(function(t){if(!t.ok)throw new Error('tree '+t.status+' '+(t.json&&t.json.message||''));log('ok','tree '+t.json.sha.slice(0,10));
 return req('POST','/repos/'+R+'/git/commits',{message:'venicestudio: '+list.length+' files',tree:t.json.sha,parents:par?[par]:[]})})
 .then(function(c){if(!c.ok)throw new Error('commit '+c.status+' '+(c.json&&c.json.message||''));log('ok','commit '+c.json.sha.slice(0,10));
 return req('PATCH','/repos/'+R+'/git/refs/heads/'+br,{sha:c.json.sha,force:false})})
