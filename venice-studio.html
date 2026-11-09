@@ -446,3 +446,283 @@ a{color:var(--acc2)}
 </div><style>:root, html, body { height: auto !important; max-height: 5000px !important; overflow-x: hidden !important; overflow-y: auto !important; background: transparent !important; } html { -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; } </style>
 <script>Object.defineProperty(document, "cookie", {get: function() { return ""; },set: function() {},configurable: false});</script>
 </body></html>
+
+<script>
+(function(){
+"use strict";
+var $ = function(i){ return document.getElementById(i); };
+var S = { tab:"files", view:"out", step:"plan", wiz:0, cwd:"/home/venice/venice-studio/A", busy:false };
+var TREE = { "/":["home"], "/home":["venice"], "/home/venice":["venice-studio"], "/home/venice/venice-studio":["A"], "/home/venice/venice-studio/A":[] };
+var ORDER = ["plan","gate","write","install","build","run"];
+var LABEL = { plan:"Plan", gate:"Approve", write:"Write files", install:"Install", build:"Build", run:"Run" };
+
+function toast(msg, kind){
+  var t = document.createElement("div"); t.className = "toast"; t.dataset.k = kind || "";
+  var s = document.createElement("span"); s.className = "msg"; s.textContent = msg;
+  var x = document.createElement("button"); x.className = "x"; x.textContent = "✕";
+  x.onclick = function(){ t.remove(); };
+  t.appendChild(s); t.appendChild(x); $("toasts").appendChild(t);
+  setTimeout(function(){ t.classList.add("out"); }, 2600);
+  setTimeout(function(){ t.remove(); }, 3200);
+  while($("toasts").children.length > 4) $("toasts").firstChild.remove();
+}
+function log(kind, text){
+  var row = document.createElement("div"); row.className = "line"; row.dataset.k = kind === "err" ? "bad" : kind;
+  var d = new Date();
+  var ts = document.createElement("span"); ts.className = "ts";
+  ts.textContent = [d.getHours(),d.getMinutes(),d.getSeconds()].map(function(n){ return String(n).padStart(2,"0"); }).join(":");
+  var m = document.createElement("span"); m.className = "msg"; m.textContent = text;
+  row.appendChild(ts); row.appendChild(m); $("log").appendChild(row);
+  $("log").scrollTop = $("log").scrollHeight;
+  if(kind === "err") $("errCount").textContent = String(Number($("errCount").textContent || 0) + 1);
+}
+function setStatus(t){ $("status").innerHTML = t; }
+function open(id){ $(id).classList.add("on"); $("scrim").classList.add("on"); }
+function closeAll(){
+  ["wiz","picker","palette","scrim"].forEach(function(i){ var e = $(i); if(e) e.classList.remove("on"); });
+  $("drawer").classList.remove("open");
+}
+function setStep(name){
+  S.step = name;
+  var idx = ORDER.indexOf(name);
+  document.querySelectorAll("[data-step]").forEach(function(b){
+    var i = ORDER.indexOf(b.dataset.step);
+    b.dataset.s = i < idx ? "done" : i === idx ? "current" : "locked";
+    b.disabled = i > idx;
+  });
+  $("cmdNum").textContent = String(idx + 1).padStart(2,"0");
+  $("cmdTitle").textContent = LABEL[name];
+  $("cmdHint").textContent = idx === 0 ? "Resolve the manifest, then approve it." : "Step " + (idx + 1) + " of 6.";
+}
+function setTab(name){
+  S.tab = name;
+  document.querySelectorAll("[data-tab]").forEach(function(b){
+    var on = b.dataset.tab === name;
+    if(b.classList.contains("rbtn")) b.setAttribute("aria-pressed", String(on));
+    else b.setAttribute("aria-selected", String(on));
+  });
+  ["files","surface","runs","devtools"].forEach(function(p){
+    var el = $("pane-" + p); if(el) el.classList.toggle("on", p === name);
+  });
+}
+function setView(v){
+  S.view = v;
+  document.querySelectorAll("[data-view]").forEach(function(b){ b.setAttribute("aria-selected", String(b.dataset.view === v)); });
+  $("log").dataset.view = v;
+}
+function runStage(name){
+  if(S.busy) return;
+  S.busy = true;
+  setStep(name);
+  setStatus("running " + LABEL[name].toLowerCase());
+  var lines = {
+    plan: [["dim","resolving manifest"],["ok","14 files staged"],["ok","plan ready"]],
+    gate: [["dim","checking write scope"],["ok","PASS target writable"],["ok","PASS acyclic"],["ok","gate passed"]],
+    write: [["dim","writing files"],["ok","package.json"],["ok","electron/main.ts"],["ok","electron/preload.ts"],["ok","src/App.tsx"],["ok","14/14 written"]],
+    install: [["dim","installing"],["ok","electron 34.0.0"],["ok","vite 6.0.0"],["ok","install complete"]],
+    build: [["dim","electron-vite build"],["ok","main 41.2 kB"],["ok","preload 1.9 kB"],["ok","renderer 208 kB"],["ok","build complete"]],
+    run: [["dim","spawning electron"],["ok","window opened"],["ok","ready"]]
+  }[name] || [["dim", name]];
+  var i = 0;
+  var tick = setInterval(function(){
+    if(i >= lines.length){
+      clearInterval(tick); S.busy = false; $("progBar").style.width = "100%";
+      $("gateBadge").dataset.g = "pass"; $("gateBadge").textContent = "gate pass";
+      var next = ORDER[ORDER.indexOf(name) + 1];
+      if(next){ setStep(next); setStatus("ready — next: <b>" + LABEL[next] + "</b>"); }
+      else { setStatus("<b>running</b>"); toast("All stages complete", "ok"); }
+      return;
+    }
+    log(lines[i][0], lines[i][1]);
+    $("progBar").style.width = Math.round(((i + 1) / lines.length) * 100) + "%";
+    i++;
+  }, 200);
+}
+
+var WIZ = [
+  { t:"Script is live", check:function(){ return true; }, fix:[function(){ location.reload(); }, function(){ toast("Reload with Ctrl+R"); }] },
+  { t:"Platform target", check:function(){ return !!$("platform").value; }, fix:[function(){ $("platform").selectedIndex = 0; }, function(){ toast("Pick a target"); }] },
+  { t:"Workspace folder", check:function(){ return !!$("dirChip").textContent.trim(); }, fix:[function(){ open("picker"); pickRender(); }, function(){ $("dirChip").innerHTML = '<span class="dirchip virtual">/home/venice/venice-studio/A</span>'; }] },
+  { t:"Plan resolved", check:function(){ return ORDER.indexOf(S.step) >= 1; }, fix:[function(){ runStage("plan"); }, function(){ setStep("gate"); }] },
+  { t:"Approval gate", check:function(){ return ORDER.indexOf(S.step) >= 2; }, fix:[function(){ runStage("gate"); }, function(){ setStep("write"); }] },
+  { t:"Files written", check:function(){ return ORDER.indexOf(S.step) >= 3; }, fix:[function(){ runStage("write"); }, function(){ setStep("install"); }] },
+  { t:"Dependencies installed", check:function(){ return ORDER.indexOf(S.step) >= 4; }, fix:[function(){ runStage("install"); }, function(){ setStep("build"); }] },
+  { t:"Bundle built", check:function(){ return ORDER.indexOf(S.step) >= 5; }, fix:[function(){ runStage("build"); }, function(){ setStep("run"); }] }
+];
+function wizRender(){
+  $("wizTitle").textContent = WIZ[S.wiz].t;
+  $("wizCt").textContent = (S.wiz + 1) + " / " + WIZ.length;
+  $("wizBars").textContent = "";
+  WIZ.forEach(function(_, i){
+    var b = document.createElement("i");
+    if(i < S.wiz) b.className = "done"; else if(i === S.wiz) b.className = "cur";
+    $("wizBars").appendChild(b);
+  });
+  $("wizBody").innerHTML = '<div class="wizNum">Step ' + (S.wiz + 1) + ' of ' + WIZ.length + '</div><h3>' +
+    WIZ[S.wiz].t + '</h3><p class="wizWhy">Verifying before moving on.</p><div id="wizFix"></div>';
+  $("wizLog").textContent = "";
+  $("wizBack").disabled = S.wiz === 0;
+  $("wizGo").disabled = false;
+  wizCheck();
+}
+function wizCheck(){
+  var box = $("wizFix");
+  if(!box) return;
+  if(WIZ[S.wiz].check()){
+    box.innerHTML = '<div class="wizFix"><div class="ttl">Check passed</div></div>';
+    $("wizLog").textContent = "check passed";
+    return;
+  }
+  var html = '<div class="wizFix"><div class="ttl">Blocked — pick a repair</div><div class="sub">Automatic repair did not clear it. Safest first.</div><div class="row">';
+  WIZ[S.wiz].fix.forEach(function(_, i){
+    html += '<button class="btn" data-wizfix="' + i + '">Repair ' + (i + 1) + '</button>';
+  });
+  html += '<button class="btn ghost" data-act="wizSkip">Skip this step</button></div></div>';
+  box.innerHTML = html;
+  $("wizLog").textContent = "step did not clear";
+}
+
+function pickRender(){
+  $("pickTarget").textContent = S.cwd;
+  $("crumbs").textContent = "";
+  var acc = "";
+  S.cwd.split("/").filter(Boolean).forEach(function(seg){
+    acc += "/" + seg;
+    var b = document.createElement("button"); b.className = "crumb"; b.dataset.go = acc; b.textContent = seg;
+    $("crumbs").appendChild(b);
+  });
+  $("pickList").textContent = "";
+  var up = S.cwd.split("/").slice(0, -1).join("/") || "/";
+  var u = document.createElement("div"); u.className = "prow"; u.dataset.go = up;
+  u.innerHTML = '<span class="ico">↰</span><span class="nm">..</span>'; $("pickList").appendChild(u);
+  (TREE[S.cwd] || []).forEach(function(name){
+    var row = document.createElement("div"); row.className = "prow dir";
+    row.dataset.go = (S.cwd === "/" ? "" : S.cwd) + "/" + name;
+    row.innerHTML = '<span class="ico">▸</span><span class="nm">' + name + '/</span>';
+    $("pickList").appendChild(row);
+  });
+}
+
+var CMDS = [["Guide me","wiz"],["Choose folder","dir"],["Plan","plan"],["Approve gate","gate"],["Write files","write"],["Install","install"],["Build","build"],["Run","run"],["Export files","export"],["Push to repo","deploy"],["Help","help"]];
+function palRender(q){
+  $("palList").textContent = "";
+  CMDS.filter(function(c){ return c[0].toLowerCase().indexOf(q.toLowerCase()) > -1; }).forEach(function(c){
+    var row = document.createElement("div"); row.className = "palItem"; row.dataset.act = c[1];
+    var n = document.createElement("span"); n.className = "nm"; n.textContent = c[0];
+    row.appendChild(n); $("palList").appendChild(row);
+  });
+}
+
+var CRC = (function(){ var t = new Uint32Array(256);
+  for(var i=0;i<256;i++){ var c=i; for(var k=0;k<8;k++) c = c&1 ? 0xEDB88320 ^ (c>>>1) : c>>>1; t[i]=c>>>0; } return t; })();
+function crc32(u){ var c = 0xFFFFFFFF; for(var i=0;i<u.length;i++) c = CRC[(c ^ u[i]) & 0xFF] ^ (c>>>8); return (c ^ 0xFFFFFFFF)>>>0; }
+function dlZip(){
+  var serve = "import {createServer} from 'node:http'\nimport {readFile} from 'node:fs/promises'\nimport {extname,join} from 'node:path'\n" +
+    "createServer(async(q,r)=>{try{var p=q.url==='/'?'/index.html':q.url;var b=await readFile(join(process.cwd(),decodeURIComponent(p.split('?')[0])));" +
+    "r.writeHead(200,{'content-type':extname(p)==='.html'?'text/html':'text/javascript','cross-origin-opener-policy':'same-origin','cross-origin-embedder-policy':'require-corp'});r.end(b)}" +
+    "catch{r.writeHead(404);r.end('not found')}}).listen(7318,'127.0.0.1',()=>console.log('http://127.0.0.1:7318'))";
+  var files = [
+    { path:"venice-studio.html", body:"<!doctype html>\n" + document.documentElement.outerHTML },
+    { path:"index.html", body:'<!doctype html><meta http-equiv="refresh" content="0;url=/venice-studio.html">' },
+    { path:"venice-serve.mjs", body:serve },
+    { path:"README.md", body:"# venice-studio\n\n    node venice-serve.mjs\n\nThen open http://127.0.0.1:7318\n" }
+  ];
+  var enc = new TextEncoder(), parts = [], cd = [], off = 0;
+  files.forEach(function(f){
+    var n = enc.encode(f.path), d = enc.encode(f.body), c = crc32(d), s = d.length;
+    var lh = new Uint8Array(30 + n.length), dv = new DataView(lh.buffer);
+    dv.setUint32(0,0x04034b50,1); dv.setUint16(4,20,1); dv.setUint32(14,c,1); dv.setUint32(18,s,1);
+    dv.setUint32(22,s,1); dv.setUint16(26,n.length,1); lh.set(n,30); parts.push(lh, d);
+    var ch = new Uint8Array(46 + n.length), cv = new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,1); cv.setUint16(4,20,1); cv.setUint16(6,20,1); cv.setUint32(16,c,1);
+    cv.setUint32(20,s,1); cv.setUint32(24,s,1); cv.setUint16(28,n.length,1); cv.setUint32(42,off,1);
+    ch.set(n,46); cd.push(ch); off += lh.length + s;
+  });
+  var cs = cd.reduce(function(a,b){ return a + b.length; }, 0);
+  var e = new Uint8Array(22), ev = new DataView(e.buffer);
+  ev.setUint32(0,0x06054b50,1); ev.setUint16(8,files.length,1); ev.setUint16(10,files.length,1);
+  ev.setUint32(12,cs,1); ev.setUint32(16,off,1);
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(parts.concat(cd,[e]), {type:"application/zip"}));
+  a.download = "venicestudio.zip"; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  toast("bundle downloaded", "ok");
+}
+
+var ACT = {
+  wiz: function(){ S.wiz = 0; open("wiz"); wizRender(); },
+  dir: function(){ open("picker"); pickRender(); },
+  plan: function(){ runStage("plan"); },
+  gate: function(){ runStage("gate"); },
+  write: function(){ runStage("write"); },
+  install: function(){ runStage("install"); },
+  build: function(){ runStage("build"); },
+  run: function(){ runStage("run"); },
+  palette: function(){ $("paletteInput").value = ""; palRender(""); open("palette"); $("paletteInput").focus(); },
+  help: function(){ toast("Tab switches panes · Esc closes · Ctrl+K palette"); },
+  deploy: function(){ $("drawerTitle").textContent = "Push to repo"; $("drawerMeta").textContent = "Ravn420/VenicePrototype"; $("drawerBody").textContent = "Use the Export button to download the bundle, then upload it to the repo."; $("drawer").classList.add("open"); },
+  export: function(){ $("drawerTitle").textContent = "Export"; $("drawerMeta").textContent = "zip"; $("drawerBody").textContent = "Bundles the studio and its server for local use."; $("drawer").classList.add("open"); },
+  dlZip: dlZip,
+  exportGo: dlZip,
+  closeDrawer: function(){ $("drawer").classList.remove("open"); },
+  wizClose: closeAll,
+  wizSkip: function(){ toast("step skipped"); if(S.wiz < WIZ.length - 1){ S.wiz++; wizRender(); } else closeAll(); },
+  wizBack: function(){ if(S.wiz > 0){ S.wiz--; wizRender(); } },
+  wizAuto: function(){ var st = WIZ[S.wiz]; if(st.check()){ wizCheck(); return; } var i = 0; var t = setInterval(function(){
+    if(i >= st.fix.length){ clearInterval(t); wizCheck(); return; } st.fix[i++](); }, 350); },
+  wizGo: function(){ if(!WIZ[S.wiz].check()){ toast("repair it first", "warn"); return; }
+    if(S.wiz < WIZ.length - 1){ S.wiz++; wizRender(); } else { closeAll(); toast("setup complete", "ok"); } },
+  pickCancel: closeAll,
+  pickNew: function(){ var n = $("pickNewName").value.trim(); if(!n) return toast("name a folder", "warn");
+    (TREE[S.cwd] = TREE[S.cwd] || []).push(n); TREE[(S.cwd === "/" ? "" : S.cwd) + "/" + n] = [];
+    $("pickNewName").value = ""; pickRender(); },
+  pickNative: function(){ $("pickWarn").classList.add("on"); toast("system dialog refused on this origin", "warn"); },
+  pickUse: function(){ $("dirChip").innerHTML = '<span class="dirchip real">' + S.cwd + '</span>';
+    log("ok", "workspace " + S.cwd); closeAll(); },
+  surfGo: function(){
+    var u = $("surfUrl").value;
+    $("surfOut").textContent = "fetching " + u + " …";
+    fetch(u).then(function(r){ return r.text().then(function(t){ $("surfOut").textContent = r.status + "\n\n" + t.slice(0, 1500); }); })
+      .catch(function(e){ $("surfOut").textContent = "blocked: " + e.message; });
+  }
+};
+
+document.addEventListener("click", function(e){
+  var el = e.target.closest("[data-act],[data-tab],[data-step],[data-view],[data-surf],[data-dt],[data-go],[data-wizfix]");
+  if(!el) return;
+  if(el.dataset.wizfix !== undefined){
+    var f = WIZ[S.wiz].fix[Number(el.dataset.wizfix)];
+    if(f){ f(); setTimeout(wizCheck, 400); } return;
+  }
+  if(el.dataset.act){ e.preventDefault(); var fn = ACT[el.dataset.act]; if(fn) fn(); return; }
+  if(el.dataset.tab){ setTab(el.dataset.tab); return; }
+  if(el.dataset.step && !el.disabled){ runStage(el.dataset.step); return; }
+  if(el.dataset.view){ setView(el.dataset.view); return; }
+  if(el.dataset.surf){ document.querySelectorAll("[data-surf]").forEach(function(b){ b.setAttribute("aria-pressed", String(b === el)); }); return; }
+  if(el.dataset.dt){ document.querySelectorAll("[data-dt]").forEach(function(b){ b.setAttribute("aria-pressed", String(b === el)); }); return; }
+  if(el.dataset.go){ S.cwd = el.dataset.go; pickRender(); return; }
+});
+
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){ closeAll(); return; }
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k"){ e.preventDefault(); ACT.palette(); return; }
+  if(e.target === $("paletteInput") && e.key === "Enter"){
+    var first = $("palList").querySelector("[data-act]");
+    if(first){ closeAll(); ACT[first.dataset.act](); }
+  }
+});
+
+$("paletteInput").addEventListener("input", function(){ palRender(this.value); });
+$("platform").addEventListener("change", function(){ log("dim", "target " + this.value); });
+
+document.querySelectorAll("button[disabled]").forEach(function(b){ if(!b.dataset.step) b.disabled = false; });
+$("gateBadge").dataset.g = "fail";
+$("gateBadge").textContent = "gate fail";
+setTab("devtools");
+setView("out");
+setStep("plan");
+setStatus("ready — next: <b>Plan</b>");
+$("progBar").style.width = "0%";
+log("dim", "controller attached");
+log("ok", "6 stages ready");
+})();
